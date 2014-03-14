@@ -1,0 +1,65 @@
+#!/bin/sh
+NAME_COMPILER=""
+TIME_IN_SECONDS=""
+PATH_FILE_SOURCE=""
+PATH_FILE_OUTPUT=""
+PATH_DIR_OUTPUT=""
+DATE_YEAR_MONTH_DATE=""
+DATE_TIME=""
+
+usage () {
+    echo 'usage: rrr [compiler command] [seconds] [filepath]'
+    echo 'ex: rrr ruby 10 test-file.rb'
+}
+
+if test $# -ne 3 ; then
+    echo "ERROR: Incorrect number of arguments."
+    usage
+    exit
+fi
+
+# Get compiler type
+case $1 in
+    ruby)
+        NAME_COMPILER="ruby"
+        ;;
+    *)
+        echo "ERROR: Unable to find the compiler, $1"
+        usage
+        exit
+esac
+
+# Get sleep time in seconds
+if (test "${2}" -lt 0 ) || ( test "${2}" -ge 3600 ); then
+    echo "ERROR: Sleep seconds must be ranged between 0 to 3600."
+    usage
+    exit
+else
+    TIME_IN_SECONDS="${2}"
+fi
+
+# Get path to the file to be run
+if (! test -r "${3}"); then
+    echo "ERROR: Unable to locate the file. "
+    usage
+    exit
+else
+    PATH_FILE_SOURCE="${PWD}/${3}"
+fi
+
+# Main
+DATE_YEAR_MONTH_DATE="`date \"+%Y%m%d\"`"
+DATE_TIME="`date \"+%H%M%S\"`"
+PATH_DIR_OUTPUT="${PATH_FILE_SOURCE%/*}/.${DATE_YEAR_MONTH_DATE}"
+PATH_FILE_OUTPUT="${PATH_DIR_OUTPUT}/${DATE_TIME}.${3}"
+
+if (! test -d "${PATH_DIR_OUTPUT}"); then
+    mkdir "${PATH_DIR_OUTPUT}"
+fi
+while (true); do
+    echo "Execution time: \c" | tee -a "${PATH_FILE_OUTPUT}"
+    date "+%Y/%m/%d %H:%M:%S" | tee -a "${PATH_FILE_OUTPUT}"
+    ${NAME_COMPILER} "${PATH_FILE_SOURCE}" 2>&1 | tee -a "${PATH_FILE_OUTPUT}"
+    echo "" | tee -a "${PATH_FILE_OUTPUT}"
+    sleep "${TIME_IN_SECONDS}"
+done
